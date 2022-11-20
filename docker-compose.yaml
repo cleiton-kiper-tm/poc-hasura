@@ -1,0 +1,79 @@
+version: "3.3"
+services:
+  hasura_metadata:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: hasura
+      POSTGRES_DB: hasura
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 15s
+      retries: 5
+
+    ports:
+      - 5434:5432
+
+  enroll-db:
+    build:
+      context: ./enroll
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: enroll
+      POSTGRES_DB: enroll
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 15s
+      retries: 5
+
+    ports:
+      - 5432:5432
+
+  statement-db:
+    build:
+      context: ./statement
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: statement
+      POSTGRES_DB: statement
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 15s
+      retries: 5
+
+    ports:
+      - 5433:5432
+
+  graphql-engine:
+    image: hasura/graphql-engine:v2.15.1
+    ports:
+    - "8080:8080"
+    depends_on:
+    - "hasura_metadata"
+    - "enroll-db"
+    - "statement-db"
+    restart: always
+    environment:
+      ## postgres database to store Hasura metadata
+      HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://postgres:hasura@hasura_metadata:5432/hasura
+      ## this env var can be used to add the above postgres database to Hasura as a data source. this can be removed/updated based on your needs
+      # PG_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
+      ## enable the console served by server
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set to "false" to disable console
+      ## enable debugging mode. It is recommended to disable this in production
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+      ## uncomment next line to run console offline (i.e load console assets from server instead of CDN)
+      # HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
+      ## uncomment next line to set an admin secret
+      # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecret
+      # HASURA_GRAPHQL_UNAUTHORIZED_ROLE: admin
+      # HASURA_GRAPHQL_ENABLE_ALLOWLIST: "true"
