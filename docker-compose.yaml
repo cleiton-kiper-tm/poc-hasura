@@ -76,4 +76,4 @@ services:
       ## uncomment next line to set an admin secret
       # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecret
       # HASURA_GRAPHQL_UNAUTHORIZED_ROLE: admin
-      # HASURA_GRAPHQL_ENABLE_ALLOWLIST: "true"
+      HASURA_GRAPHQL_ENABLE_ALLOWLIST: "true"
